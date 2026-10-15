@@ -1,22 +1,61 @@
-class StandStandard:
-    def __init__(self, codice, n1, n2, n3):
+class Stand:
+    def __init__(self, codice, superficie, padiglione, prezzo):
         self.codice = codice
-        self.n1 = n1
-        self.n2 = n2
-        self.n3 = n3
+        self.superficie = float(superficie)
+        self.padiglione = padiglione
+        self.prezzo = float(prezzo)
+        self.espositore = None
 
+    def prezzo_finale(self):
+        return self.prezzo
 
     def __str__(self):
-        return f"{self.codice} {self.n1} {self.n2} {self.n3}"
+        if self.espositore is None:
+            condizione = "Disponibile"
+        else:
+            condizione = "Occupato"
+        return f"{self.codice}: Standard | {self.superficie} mq - Padiglione {self.padiglione} - Prezzo {self.prezzo_finale()}€ - {condizione}"
+
+    def __lt__(self, other):
+        return self.prezzo_finale() < other.prezzo_finale()
+
+    def __eq__(self, other):
+        if isinstance(other, Stand):
+            return self.codice == other.codice
+        if isinstance(other, str):
+            return self.codice == other
+        return False
 
 
-class StandPremium(StandStandard):
-    def __init__(self, codice, n1, n2, n3, prese):
-        self.codice = codice
-        self.n1 = n1
-        self.n2 = n2
-        self.n3 = n3
-        self.prese = prese
+
+class StandPreseExtra(Stand):
+    def __init__(self, codice, superficie, padiglione, prezzo, prese):
+        super().__init__(codice, superficie, padiglione, prezzo)
+        self.prese = int(prese)
+
+    def prezzo_finale(self):
+        return self.prezzo * (1 + 0.07 * self.prese)
 
     def __str__(self):
-        return f"{self.codice} {self.n1} {self.n2} {self.n3} {self.prese}"
+        if self.espositore is None:
+            condizione = "Disponibile"
+        else:
+            condizione = "Occupato"
+        return f"{self.codice}: Prese Extra | {self.superficie} mq - Padiglione {self.padiglione} - Prezzo {self.prezzo_finale()}€ - Prese aggiuntive: {self.prese} - {condizione}"
+
+
+
+class StandPremium(Stand):
+    def __init__(self, codice, superficie, padiglione, prezzo, posizione):
+        super().__init__(codice, superficie, padiglione, prezzo)
+        self.posizione = posizione
+
+    def prezzo_finale(self):
+        return self.prezzo * 1.30
+
+    def __str__(self):
+        if self.espositore is None:
+            condizione = "Disponibile"
+        else:
+            condizione = "Occupato"
+        return f"{self.codice}: Premium | {self.superficie} mq - Padiglione {self.padiglione} - Prezzo {self.prezzo_finale()}€ - Posizione: {self.posizione} - {condizione}"

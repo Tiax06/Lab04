@@ -1,6 +1,6 @@
 from espositore import Espositore
-from stand import StandStandard, StandPremium
-from assegnazione import Assegnazione
+from stand import Stand, StandPreseExtra, StandPremium
+
 
 class LingottoFiere:
     def __init__(self, nome):
@@ -13,6 +13,13 @@ class LingottoFiere:
 
     """Aggiungere setter e getter se necessari"""
     # TODO
+    @property
+    def nome(self):
+        return self.__nome
+
+    @nome.setter
+    def nome(self, nuovo_nome):
+        self.__nome = nuovo_nome
 
     def carica_file_dati(self, file_path):
         """Carica i dati (stand ed espositori) dal file"""
@@ -22,25 +29,26 @@ class LingottoFiere:
             csv_reader = reader(csv_file)
 
             for i, line in enumerate(csv_reader):
-                if i == 0:
-                    continue
 
-                codice = line[0]
+                codice = line[0].strip()
 
                 if str(codice[:2].upper()) == "ST":
-                    n1 = line[1]
-                    n2 = line[2]
-                    n3 = line[3]
+                    superficie = line[1].strip()
+                    padiglione = line[2].strip()
+                    prezzo = line[3].strip()
                     if len(line) > 4:
-                        prese = line[4]
-                        stand = StandPremium(codice, n1, n2, n3, prese)
+                        extra = line[4].strip()
+                        if extra.isdigit():
+                            stand = StandPreseExtra(codice, superficie, padiglione, prezzo, extra)
+                        else:
+                            stand = StandPremium(codice, superficie, padiglione, prezzo, extra)
                     else:
-                        stand = StandStandard(codice, n1, n2, n3)
+                        stand = Stand(codice, superficie, padiglione, prezzo)
                     self.stands.append(stand)
 
                 elif str(codice[:2].upper()) == "ES":
-                    nome = line[1]
-                    cognome = line[2]
+                    nome = line[1].strip()
+                    cognome = line[2].strip()
                     espositore = Espositore(codice, nome, cognome)
                     self.espositori.append(espositore)
 
@@ -49,43 +57,44 @@ class LingottoFiere:
     def assegna_stand_a_espositore(self, codice_stand, codice_espositore):
         """Associa uno stand a un espositore"""
         # TODO
-        # Quando viene effettuata una richiesta, il sistema deve verificare che lo stand e
-        # l'espositore esistano, che lo stand sia effettivamente disponibile e che l'espositore
-        # non sia già associato a un altro stand. Ogni stand deve mantenere un riferimento all'espositore
-        # a cui è stato assegnato. Se tutte le condizioni sono soddisfatte, lo stand viene contrassegnato
-        # come non disponibile e viene registrata l'associazione tra espositore e stand.
-        controllo1 = False
-        controllo2 = False
+        #verifico che espositore e stand esistono
+        stand_esiste = None
+        espositore_esiste = None
         for stand in self.stands:
-            if stand == codice_stand:
-                controllo1 = True
+            if stand.codice == codice_stand:
+                stand_esiste = stand
+        if stand_esiste is None:
+            raise Exception(f"Codice {codice_stand} non è registrato")
+
         for espositore in self.espositori:
-            if espositore == codice_espositore:
-                controllo2 = True
+            if espositore.codice == codice_espositore:
+                espositore_esiste = espositore
+        if espositore_esiste is None:
+            raise Exception(f"Codice {codice_espositore} non è registrato")
 
+        #controllo che non siano già stati assegnati
+        if stand_esiste.espositore is not None:
+            raise Exception(f"Lo stand selezionato è già stato assegnato a {stand_esiste.espositore}")
 
-        # da qui in poi potrebbe essere giusta la soluzione ma è sbagliata rispetto al testo dell'esercizio
-        condizione = True
-        if controllo1 and controllo2:
-            for codici in self.assegnazioni:
-                if codici == codice_stand or codici == codice_espositore:
-                    condizione = False
+        if espositore_esiste.stand is not None:
+            raise Exception(f"L'espositore selezionato è già allo stand {espositore_esiste.stand}")
 
-            if condizione:
-                assegno = Assegnazione(codice_stand, codice_espositore)
-                self.assegnazioni.append(assegno)
-            else:
-                return f"stand non disponibile"
-
-
-
-
+        # assegno i valori dopo aver passato i controlli
+        stand_esiste.espositore = espositore_esiste
+        espositore_esiste.stand = stand_esiste
 
 
     def elenca_espositori(self):
         """Stampa l'elenco degli espositori mostrando, per ognuno, lo stand a cui è associato, quando applicabile """
         # TODO
+        for espositore in self.espositori:
+            if espositore.stand is not None:
+                print(f"{espositore.codice} si trova in {espositore.stand.codice}")
+            else:
+                print(f"{espositore.codice} non è assegnato ad alcuno stand")
+
 
     def stand_ordinati_per_prezzo(self):
         """Restituisce la lista ordinata degli stand in base al prezzo"""
         # TODO
+        return sorted(self.stands)
